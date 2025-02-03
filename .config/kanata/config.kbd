@@ -1,0 +1,78 @@
+;; Kanata keyboard remap config
+
+;; base layer
+;;    CAPS-Lock => tap: ESC, hold: Left CTRL
+;;    ESC       => tap: ESC, hold: CAPS-Lock
+;;    a         => tap: a, hold: Left Super
+;;    s         => tap: s, hold: Left Alt
+;;    d         => tap: d, hold: Left Shift
+;;    f         => tap: f, hold: Left Ctrl
+;;    g         => tap: g, hold: arrow layer (home row mods disabled)
+;;    j         => tap: j, hold: Right Ctrl
+;;    k         => tap: k, hold: Right Shift
+;;    l         => tap: l, hold: Right Alt
+;;    ;         => tap: ;, hold: Right Super
+
+;; arrow layer
+;;    h j k l   => tap: one arrow, hold: repeat arrow without double tapping
+
+;; nomods layer
+;;    helper layer for fast writers using base layer
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc
+  esc
+  caps a s d f g h j k l ;
+)
+
+(defvar
+  tt 200
+  ht 150
+  lh-keys (
+    q w e r t
+    a s d f g
+    z x c v b
+  )
+  rh-keys (
+    y u i o p
+    h j k l ;
+    n m , . /
+  )
+)
+
+(deffakekeys to-base (layer-switch base))
+
+(defalias
+  esc (tap-hold-release $tt $ht esc caps)
+  caps (tap-hold-release $tt $ht esc lctl)
+
+  tap (multi (layer-switch nomods) (on-idle-fakekey to-base tap 20))
+
+  a (tap-hold-release-keys $tt $ht (multi a @tap) lmet $lh-keys)
+  s (tap-hold-release-keys $tt $ht (multi s @tap) lalt $lh-keys)
+  d (tap-hold-release-keys $tt $ht (multi d @tap) lsft $lh-keys)
+  f (tap-hold-release-keys $tt $ht (multi f @tap) lctl $lh-keys)
+  g (tap-hold-release-keys $tt $ht (multi g @tap) (layer-toggle arrow) $lh-keys)
+  j (tap-hold-release-keys $tt $ht (multi j @tap) rctl $rh-keys)
+  k (tap-hold-release-keys $tt $ht (multi k @tap) rsft $rh-keys)
+  l (tap-hold-release-keys $tt $ht (multi l @tap) ralt $rh-keys)
+  ; (tap-hold-release-keys $tt $ht (multi ; @tap) rmet $rh-keys)
+)
+
+(deflayer base
+  @esc
+  @caps @a @s @d @f @g h @j @k @l @;
+)
+
+(deflayer arrow
+  XX
+  XX XX XX XX XX _ left down up rght XX
+)
+
+(deflayer nomods
+  _
+  _ a s d f g h j k l ;
+)

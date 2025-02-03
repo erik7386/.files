@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__
+*.pyc
+.pytest*
+htmlcov
+.coverage
+
+# C Compiler.
+*.o
+*.out
+
+# VSCode
+.vscode
+
+# Vim.
+*~
+.*.sw[a-z]
+*.un~
+Session.vim
+.netrwhist
+
+# Tags created by ctags and etags.
+TAGS
+!TAGS/
+tags
+!tags/

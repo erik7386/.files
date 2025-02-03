@@ -1,0 +1,290 @@
+if &compatible | set nocompatible | endif
+
+let mapleader = ' '
+" let maplocalleader = '-'
+
+
+"
+" Encoding.
+"
+
+set encoding=utf-8
+set fileencoding=utf-8
+
+
+"
+" Vim-Packager plugin.
+"
+
+" This requires a one-time action per system:
+"  git clone https://github.com/kristijanhusak/vim-packager ~/.config/vim/pack/packager/opt/vim-packager
+function! s:packager_init( packager ) abort
+  call a:packager.add( 'kristijanhusak/vim-packager', { 'type': 'opt' } )
+  call a:packager.add( 'chrisbra/matchit', { 'type': 'opt' } )
+  call a:packager.add( 'gruvbox-community/gruvbox', { 'type': 'opt' } )
+" call a:packager.add( 'morhetz/gruvbox', { 'type': 'opt' } )
+" call a:packager.add( 'puremourning/vimspector', { 'type': 'opt' } )
+  call a:packager.add( 'tpope/vim-commentary' )
+  call a:packager.add( 'tpope/vim-fugitive' )
+  call a:packager.add( 'tpope/vim-repeat' )
+  call a:packager.add( 'tpope/vim-sensible', { 'type': 'opt' } )
+  call a:packager.add( 'tpope/vim-surround' )
+  call a:packager.add( 'vim-airline/vim-airline' )
+  call a:packager.local( '~/dev/personal-gh/vimdiffext' )
+" <Handled by gruvbox plugin>call a:packager.add( 'vim-airline/vim-airline-themes' )
+endfunction
+
+packadd vim-packager
+call packager#setup( function( 's:packager_init' ))
+
+
+"
+" Vim-Sensible plugin. Put overrides below.
+"
+
+" vim-sensible is loading matchit from the dist. Use newer version.
+packadd! matchit | set runtimepath-=$VIMRUNTIME/pack/dist/opt/matchit
+packadd vim-sensible
+
+
+"
+" Visual.
+"
+
+let g:airline_focuslost_inactive = 0
+let g:airline_powerline_fonts = 1
+"<Handled by gruvbox plugin>let g:airline_theme = 'gruvbox'
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#formatter = 'unique_tail_improved'
+let g:airline#extensions#tabline#buffers_label = 'b'
+let g:airline#extensions#tabline#tabs_label = 't'
+let g:airline#extensions#tabline#overflow_marker = '…'
+"let g:airline#extensions#tabline#show_buffers = 0
+let g:airline#extensions#tabline#buffer_idx_mode = 1
+"nmap <leader>1 <Plug>AirlineSelectTab1
+"nmap <leader>2 <Plug>AirlineSelectTab2
+"nmap <leader>3 <Plug>AirlineSelectTab3
+"nmap <leader>4 <Plug>AirlineSelectTab4
+"nmap <leader>5 <Plug>AirlineSelectTab5
+"nmap <leader>6 <Plug>AirlineSelectTab6
+"nmap <leader>7 <Plug>AirlineSelectTab7
+"nmap <leader>8 <Plug>AirlineSelectTab8
+"nmap <leader>9 <Plug>AirlineSelectTab9
+"nmap <leader>0 <Plug>AirlineSelectTab0
+nmap <S-TAB> <Plug>AirlineSelectPrevTab
+nmap <TAB> <Plug>AirlineSelectNextTab
+
+set background=dark
+
+if exists( '+termguicolors' )
+  set termguicolors
+endif
+
+packadd! gruvbox
+augroup gruvbox
+  au!
+  autocmd vimenter * ++nested colorscheme gruvbox
+augroup END
+
+nnoremap j gj
+nnoremap k gk
+
+set showcmd
+
+set number
+set relativenumber
+set cursorline
+set listchars=eol:$,tab:»·,space:·,trail:·,extends:>,precedes:<,nbsp:+
+"set laststatus=2
+
+set shiftwidth=2
+set tabstop=2
+set expandtab
+
+set visualbell t_vb=
+set nowrap
+
+set ttyfast
+set scrolloff=1
+set sidescroll=1
+if !&sidescrolloff
+  set sidescrolloff=1
+endif
+
+let g:diff_translations = 0
+
+
+"
+" Search.
+"
+
+set path+=**
+set wildmenu
+set ignorecase
+set smartcase
+set hlsearch
+
+command! -nargs=* -complete=file Vimgrep noautocmd vimgrep <args>
+
+
+"
+" Handling (backup) files.
+"
+
+set backup
+set backupdir=$HOME/.config/vim/backup
+set directory=$HOME/.config/vim/backup
+if has( 'persistent_undo' )
+  set undofile
+  set undodir=$HOME/.config/vim/backup
+endif
+if has( 'viminfo' )
+  set viminfofile=$HOME/.config/vim/viminfo
+endif
+
+
+"
+" Misc.
+"
+
+set ttymouse=sgr
+set mouse=a
+
+set cryptmethod=blowfish2
+
+command Bterm botright terminal
+
+" Quickfix.
+let g:compiler_warnings_included = 1
+let g:compiler_information_included = 1
+let g:compiler_ignore_unmatched_lines = 0
+
+" netrw stuff.
+let g:netrw_banner = 0
+let g:netrw_liststyle = 3
+
+" Toggle <Home> between first non whitespace character and pos 0.
+function! s:SmartHome()
+  if col( '.' ) != match( getline( '.' ), '\S' ) + 1
+    norm ^
+  else
+    norm 0
+  endif
+endfunction
+inoremap <silent><home> <C-O>:call <SID>SmartHome()<CR>
+nnoremap <silent><home> :call <SID>SmartHome()<CR>
+vnoremap <silent><home> :call <SID>SmartHome()<CR>
+
+function! s:DoPrettyXML()
+  " Break lines at expected places. That is between > and <.
+  silent! :%join
+  silent! :%s/>\s*<\(br>\)\@!/>\r</g
+  normal! gg0=G
+endfunction
+nnoremap <silent><F9> :call <SID>DoPrettyXML()<CR>
+
+function! s:DoPrettyJSON()
+  " Break lines at expected places. That is outside strings and
+  "   - after '[', '{' or ','
+  "   - before ']' or '}'
+  silent! :%join
+  "silent! :%s:\(\\\@<!\(["']\).\{-}\\\@<!\2\)\|\s:\1:g
+  silent! :%s!\s\+\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!!g
+  silent! :%s!\([[{,]\)\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!\1\r!g
+  silent! :%s!\([]}]\)\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!\r\1!g
+  silent! :%s!:\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!: !g
+  silent! :%s!\([[{]\)\_s*\([]}]\)!\1\2!g
+  normal! gg0=G
+endfunction
+nnoremap <silent><F10> :call <SID>DoPrettyJSON()<CR>
+
+" Put these in an autocmd group, so that we can delete them easily.
+augroup vimrcEx
+  au!
+  " For all text files set 'textwidth' to 78 characters.
+  autocmd FileType text setlocal textwidth=78
+augroup END
+
+augroup git
+  au!
+  " Set UTF-8 as the default encoding for commit messages in git.
+  autocmd BufReadPre COMMIT_EDITMSG,git-rebase-todo
+    \ setlocal fileencodings=utf-8
+
+  " Remember the positions in files with some git-specific exceptions.
+  autocmd BufReadPost *
+    \ if line( "'\"" ) > 0 && line( "'\"" ) <= line( "$" )
+    \   && expand( "%" ) !~ "COMMIT_EDITMSG"
+    \   && expand( "%" ) !~ "ADD_EDIT.patch"
+    \   && expand( "%" ) !~ "addp-hunk-edit.diff"
+    \   && expand( "%" ) !~ "git-rebase-todo" |
+    \   exe "normal g`\"" |
+    \ endif
+
+  " Handle files as diff type and highlight.
+  autocmd BufNewFile,BufRead *.diff,*.patch set filetype=diff
+  autocmd Syntax diff
+    \ highlight WhiteSpaceEOL ctermbg=red |
+    \ match WhiteSpaceEOL /\(^+.*\)\@<=\s\+$/
+
+  " Mark max line length of a git comment.
+  autocmd Syntax gitcommit setlocal textwidth=72
+augroup END
+
+"" Change current directory to path of first file in argument list.
+"if !&diff && argc() > 0
+"  execute "cd " . fnamemodify( argv( 0 ), ":p:h" )
+"endif
+
+"autocmd FileType sql setlocal formatprg=sqlformat\ --reindent\ --keywords\ upper\ --identifiers\ lower\ -
+"autocmd FileType sql setlocal formatprg=/usr/local/bin/pg_format\ --function-case\ 0\ --keyword-case\ 0\ --type-case\ 0\ --spaces\ 2\ --no-extra-line\ -
+autocmd FileType c,cpp setlocal equalprg=clang-format
+
+" Quickly edit/reload the vimrc/gvimrc file.
+nmap <silent> <leader>ev :e $MYVIMRC<CR>
+nmap <silent> <leader>sv :so $MYVIMRC<CR>
+nmap <silent> <leader>eg :e $MYGVIMRC<CR>
+nmap <silent> <leader>sg :so $MYGVIMRC<CR>
+
+" unload/delete/wipe all buffers.
+"nmap <silent> <leader>bun :%bun<CR>:NERDTree<CR>:wincmd l<CR>
+"nmap <silent> <leader>bd :%bd<CR>:NERDTree<CR>:wincmd l<CR>
+"nmap <silent> <leader>bw :%bw<CR>:NERDTree<CR>:wincmd l<CR>
+
+nnoremap <leader>l :LF<cr>
+function! LF()
+  let temp = tempname()
+  exec 'silent !lf -selection-path=' . shellescape(temp)
+  if !filereadable(temp)
+    redraw!
+    return
+  endif
+  let names = readfile(temp)
+  if empty(names)
+    redraw!
+    return
+  endif
+  exec 'edit ' . fnameescape(names[0])
+  for name in names[1:]
+    exec 'argadd ' . fnameescape(name)
+  endfor
+  redraw!
+endfunction
+command! -bar LF call LF()
+
+augroup encrypted
+  au!
+  autocmd BufReadPre,FileReadPre *.gpg
+    \ set viminfo= noswapfile bin
+    \ let ch_save = &ch|set ch=2
+  autocmd BufReadPost,FileReadPost *.gpg
+    \ '[,']!gpg --decrypt 2> /dev/null
+    \ set nobin
+    \ let &ch = ch_save|unlet ch_save
+    \ execute ":doautocmd BufReadPost " . expand("%:r")
+  autocmd BufWritePre,FileWritePre *.gpg
+    \ set viminfo= noswapfile
+    \ '[,']!gpg --default-recipient-self -ae 2> /dev/null
+  autocmd BufWritePost,FileWritePost *.gpg u
+augroup END
+

@@ -1,0 +1,26 @@
+
+(defcfg
+  output (uinput-sink "kmonad output")
+  fallthrough true
+)
+
+(defsrc
+  esc
+  caps h j k l
+  102d up
+  left down rght
+)
+
+(deflayer base-layer
+  (tap-hold-next 300 esc caps)
+  (tap-hold-next 300 esc ctl) _ _ _ _  
+  (layer-toggle arrow-layer) _
+  _ _ _
+)
+
+(deflayer arrow-layer
+  _
+  _ left down up rght
+  _ _
+  _ _ _
+)
