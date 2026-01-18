@@ -1,0 +1,6 @@
+# This file is tracked in repo ~/.local/share/dotfiles/.files.git
+# Find the global ignore file in ~/.config/git/
+#
+/.local/share/dotfiles/.files.git/
+/.ssh/
+*.env

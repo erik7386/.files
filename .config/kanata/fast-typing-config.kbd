@@ -1,0 +1,155 @@
+;; Kanata keyboard remap
+;;
+;; This config is based on https://github.com/jtroo/kanata/discussions/1425
+;; which basically is home row mods. Some remaps are added:
+;;   - CapsLock => tap ESC, hold L-CTRL
+;;   - Hold g => move cursor with hjkl, [ -> å, ' -> ä, ; -> ö,
+;;       accent letters á é í ó on a e i o
+;;   - Hold 1 => reload Kanata config
+;;
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defvirtualkeys
+  to-base (layer-switch base)
+)
+
+(defvar
+  tot 220
+)
+
+(deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
+  (tap-hold $timeouttap $timeouthold (multi $keytap @.tp) $keyhold)
+)
+
+(defalias
+  .tp (multi
+    (one-shot 95 (layer-while-held typing))
+    (on-idle  95 tap-vkey to-base)
+  )
+)
+
+(platform (macos)
+  (defalias
+    .f1 brdown
+    .f2 brup
+    .f3 f3
+    .f4 f4
+    .f5 f5
+    .f6 f6
+    .f7 MediaTrackPrevious
+    .f8 MediaPlayPause
+    .f9 MediaTrackNext
+    .f10 VolumeMute
+    .f11 VolumeDown
+    .f12 VolumeUp
+    .a (macro (unmod ralt e) a)
+    .e (macro (unmod ralt e) e)
+    .i (macro (unmod ralt e) i)
+    .o (macro (unmod ralt e) o)
+    .[ RA-a
+    .' (macro (unmod ralt u) a)
+    .; (macro (unmod ralt u) o)
+  )
+)
+
+(platform (linux)
+  (defalias
+    .f1 f1
+    .f2 f2
+    .f3 f3
+    .f4 f4
+    .f5 f5
+    .f6 f6
+    .f7 f7
+    .f8 f8
+    .f9 f9
+    .f10 f10
+    .f11 f11
+    .f12 f12
+    .a RA-a
+    .e RA-e
+    .i RA-i
+    .o RA-o
+    .[ RA-w
+    .' RA-q
+    .; RA-p
+  )
+)
+
+(platform (wintercept)
+  (defalias
+    .f1 f1
+    .f2 f2
+    .f3 f3
+    .f4 f4
+    .f5 f5
+    .f6 f6
+    .f7 f7
+    .f8 f8
+    .f9 f9
+    .f10 f10
+    .f11 f11
+    .f12 f12
+    .a RA-a
+    .e RA-e
+    .i RA-i
+    .o RA-o
+    .[ RA-w
+    .' RA-q
+    .; RA-p
+  )
+)
+
+(defsrc )
+
+(deflayermap (base)
+  f1 @.f1
+  f2 @.f2
+  f3 @.f3
+  f4 @.f4
+  f5 @.f5
+  f6 @.f6
+  f7 @.f7
+  f8 @.f8
+  f9 @.f9
+  f10 @.f10
+  f11 @.f11
+  f12 @.f12
+  esc  (tap-hold $tot 220 esc caps)
+  caps (tap-hold $tot 220 esc lctl)
+  1 (t! homerowmod $tot 450 1 lrld)
+  a (t! homerowmod $tot 450 a lmet)
+  s (t! homerowmod $tot 400 s lalt)
+  d (t! homerowmod $tot 300 d lctl)
+  f (t! homerowmod $tot 160 f lsft)
+  g (t! homerowmod $tot 220 g (layer-while-held arrow_swe))
+  j (t! homerowmod $tot 160 j rsft)
+  k (t! homerowmod $tot 300 k rctl)
+  l (t! homerowmod $tot 400 l ralt)
+  ; (t! homerowmod $tot 450 ; rmet)
+  q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp)
+  h (multi h @.tp)
+  z (multi z @.tp) x (multi x @.tp) c (multi c @.tp) v (multi v @.tp) b (multi b @.tp) n (multi n @.tp) m (multi m @.tp)
+)
+
+(deflayermap (typing)
+  a (unmod a) b (unmod b) c (unmod c) d (unmod d) e (unmod e) f (unmod f) g (unmod g) h (unmod h) i (unmod i) j (unmod j) k (unmod k) l (unmod l) m (unmod m) n (unmod n) o (unmod o) p (unmod p) q (unmod q) r (unmod r) s (unmod s) t (unmod t) u (unmod u) v (unmod v) w (unmod w) x (unmod x) y (unmod y) z (unmod z) ; (unmod ;)
+)
+
+(deflayermap (arrow_swe)
+  h (unmod left)
+  j (unmod down)
+  k (unmod up)
+  l (unmod rght)
+  a @.a
+  e @.e
+  i @.i
+  o @.o
+  [ @.[
+  ' @.'
+  ; @.;
+)
+

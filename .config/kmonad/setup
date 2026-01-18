@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+##############################################################################
+#
+
+set -e
+set -x
+
+need_reboot=0
+need_logout=0
+
+f='/etc/udev/rules.d/60-uinput.rules'
+[[ ! -e ${f} ]] &&
+  sudo echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' > ${f} &&
+  sudo modprobe uinput &&
+  need_reboot=1
+
+f='/etc/udev/rules.d/61-mx-keys-keyboard.rules'
+[[ ! -e ${f} ]] &&
+  sudo echo 'ATTRS{name}=="MX Keys Keyboard", SYMLINK+="input/by-id/mx-keys-kbd"' > ${f} &&
+  need_reboot=1
+
+[[ 2 != $(cat /etc/group | grep -E '^u?input' | wc -l) ]] &&
+  sudo groupadd uinput &&
+  need_logout=1
+
+[[ ! $(id | grep -E '\<input\>') ]] &&
+  sudo usermod -aG input $USER &&
+  need_logout=1
+
+[[ ! $(id | grep -E '\<uinput\>') ]] &&
+  sudo usermod -aG uinput $USER &&
+  need_logout=1
+
+[[ 1 == ${need_reboot} ]] &&
+  echo 'It is recommended to reboot at this point.' &&
+  echo 'Please re-run this script after next reboot.' &&
+  exit 0
+
+[[ 1 == ${need_logout} ]] &&
+  echo 'It is recommended to logout at this point.' &&
+  echo 'Please re-run this script after next login.' &&
+  exit 0
+
+s='kmonad@.service'
+sudo ln -f -s \
+  $(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/${s} \
+  /lib/systemd/user/${s}
+systemctl --user daemon-reload
+
+for f in $(ls -x /dev/input/by-*/*-kbd | grep -v pci*); do
+  s=kmonad@$(systemd-escape -p ${f}).service
+  systemctl --user disable ${s} &> /dev/null || true
+  systemctl --user stop ${s} &> /dev/null || true
+  systemctl --user start ${s}
+  systemctl --user enable ${s}
+done

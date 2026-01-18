@@ -1,0 +1,12 @@
+set lines=50
+if &diff | set columns=165 | else | set columns=120 | endif
+if has( "gui_gtk" )
+   set guifont=MesloLGS\ NF\ 10
+elseif has( "gui_mac")
+   set guifont=MesloLGS\ NF:10
+elseif has( "gui_win32" )
+   set guifont=MesloLGS_NF:h10
+else
+   " Not yet supported gui.
+endif
+

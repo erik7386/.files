@@ -1,0 +1,59 @@
+[user]
+	name = me
+	email =
+[core]
+	autocrlf = input
+	safecrlf = warn
+	excludesfile = ~/.config/git/ignore
+	editor = nvim
+[alias]
+	br = branch
+	ci = commit
+	co = checkout
+	d = difftool --tool vimdiff
+	dd = difftool --tool vimdiffext --dir-diff
+	ddd = difftool --tool vimdiffext2 --dir-diff
+	l = log --pretty=onelineshort --graph
+	ll = log --pretty=onelineshort --graph --all
+	logg = log --oneline --graph --decorate
+	loggg = log --oneline --graph --decorate --all
+	st = status --short --branch
+	clone-wt = "!f(){ a=(\"${@: -2}\");l=${#a[@]};[[ ${a[0]} == -* ]] && a=(\"${a[@]:1}\") && l=1;c=${a[0]##*/};n=${a[1]:-${c%.git}};(set -x;mkdir -p $n;cd $n;git clone ${@:1:${#@}-$l} --bare \"${a[0]}\" .gitdb__$n;echo \"gitdir: ./.gitdb__$n\">.git;git config remote.origin.fetch \"+refs/heads/*:refs/remotes/origin/*\";git fetch origin;n=$(git remote show origin|sed -n \"/HEAD branch/s/.*: //p\");git worktree add $n $n);};f"
+	wta = "!f(){ git worktree add -b $1 ../$1 $2;};f"
+[pretty]
+	onelinelong = tformat:%C(auto)%h%d%x20%s%x20%Cblue(⒜%x20%ar,⒞%x20%cr)%x20%Cgreen⒜%x20%an%x20<%ae>,⒞%x20%cn%x20<%ce>
+	onelineshort = tformat:%C(auto)%h%d%x20%s%x20%Cblue(⒜%x20%ar,⒞%x20%cr)%x20%Cgreen⒜%x20%an,⒞%x20%cn
+	onelinediff = tformat:%C(yellow)%m%C(auto)%x20%h%d%x20%s%x20%Cblue(⒜%x20%ar,⒞%x20%cr)%x20%Cgreen⒜%x20%an,⒞%x20%cn
+	onelinetmp = tformat:%h%d%x20%an,%x20%cn
+[color]
+	ui = auto
+[init]
+	defaultBranch = master
+[status]
+	submoduleSummary = true
+[fetch]
+	recurseSubmodules = on-demand
+[pull]
+	ff = only
+[push]
+	default = simple
+	followTags = true
+	recurseSubmodules = on-demand
+[diff]
+	tool = vimdiffext
+[difftool "vimdiffext"]
+	cmd = "[ -d \"${LOCAL}\" ] && cd \"${LOCAL%/*/}\" && diff -ruNd left right | nvim -R -"
+[difftool "vimdiffext2"]
+	cmd = "[ -d \"${LOCAL}\" ] && cd \"${LOCAL%/*/}\" && diff -ruPd left right | vim -R --not-a-term -"
+[merge]
+	tool = vimdiff
+[mergetool]
+	keepBackup = false
+[includeIf "gitdir/i:~/dev/personal-gh/"]
+	path = ~/.config/git/config-github
+[includeIf "gitdir/i:~/dev/work/"]
+	path = ~/.config/git/config-work
+[safe]
+	directory = *
+[advice]
+	detachedHead = false

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+##############################################################################
+#
+
+set -e
+set -x
+
+sudo install -m 644 ~/.config/kanata/kanata.service /usr/local/lib/systemd/system/kanata.service
+sudo systemctl daemon-reload
+sudo systemctl start kanata
+sudo systemctl enable kanata
+

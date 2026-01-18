@@ -1,0 +1,406 @@
+if &compatible | set nocompatible | endif
+
+filetype plugin indent on
+set encoding=utf-8
+set fileencoding=utf-8
+
+" Visual appearence/features
+syntax on
+set background=dark
+set number
+set relativenumber
+set signcolumn=yes
+set cursorline
+set colorcolumn=80
+set nowrap
+set showcmd
+set showmatch
+set noshowmode
+set listchars=eol:$,tab:»·,space:·,trail:·,extends:>,precedes:<,nbsp:+
+set visualbell t_vb=
+set laststatus=2
+set splitbelow
+set splitright
+
+" Indentation and tabs
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
+set smartindent
+set autoindent
+set expandtab
+
+" Search
+set path+=**
+set wildmenu
+set wildoptions=pum
+set ignorecase
+set smartcase
+set incsearch
+set hlsearch
+set iskeyword+=-
+
+" Timeouts
+set timeout
+set timeoutlen=1000
+set ttimeoutlen=10
+"set updatetime=50
+
+" Backup
+set nobackup
+set directory=$HOME/.config/vim/swap//
+if has( 'persistent_undo' )
+  set undofile
+  set undodir=$HOME/.config/vim/undo//
+endif
+if has( 'viminfo' )
+  set viminfofile=$HOME/.config/vim/viminfo
+endif
+
+" Commands
+command! -nargs=* -complete=file Vimgrep noautocmd vimgrep <args>
+
+" Misc
+set ttymouse=sgr
+set mouse=a
+set cryptmethod=blowfish2
+let g:netrw_banner = 0
+let g:netrw_liststyle = 3
+let g:compiler_warnings_included = 1
+let g:compiler_information_included = 1
+let g:compiler_ignore_unmatched_lines = 1
+let g:diff_translations = 0
+
+" Mappings
+let mapleader = ' '
+let maplocalleader = ' '
+cnoreabbrev h topleft help
+cnoreabbrev help topleft help
+" Move selected lines up/down (like Alt-Up/Down)
+vnoremap J <ESC><CMD>'<,'>m '>+1<CR>gv=gv
+vnoremap K <ESC><CMD>'<,'>m '<-2<CR>gv=gv
+" Join lines with cursor preserved
+nnoremap J mzJ`z
+" Scroll half-page and center cursor
+nnoremap <C-d> <C-d>zz
+nnoremap <C-u> <C-u>zz
+" Center on next/previous search result
+nnoremap n nzzzv
+nnoremap N Nzzzv
+" Paste without overwriting clipboard
+xnoremap <leader>p "_dp
+xnoremap <leader>P "_dP
+nnoremap <leader>d "_d
+vnoremap <leader>d "_d
+" Disable Ex mode (accidental Q)
+nnoremap Q <nop>
+" Substitute word under cursor on line
+nnoremap <leader>s :s/\<<C-r><C-w>\>//gI<Left><Left><Left>
+" Yank via OSCYank
+"nmap <leader>y <Plug>OSCYankOperator
+"vmap <leader>y <Plug>OSCYankVisual
+
+
+
+" Plugins
+let s:plugin_dir = expand('~/.config/vim/pack/me/start')
+function! s:ensure_installed(repo)
+  let name = split(a:repo, '/')[-1]
+  let path = s:plugin_dir . '/' . name
+  if !isdirectory(path)
+    call mkdir(s:plugin_dir, 'p')
+    execute '!git clone --depth=1 https://github.com/' . a:repo . ' ' . shellescape(path)
+  endif
+endfunction
+call s:ensure_installed('junegunn/fzf')
+call s:ensure_installed('junegunn/fzf.vim')
+call s:ensure_installed('gruvbox-community/gruvbox')
+call s:ensure_installed('yegappan/lsp')
+call s:ensure_installed('github/copilot.vim')
+"call s:ensure_installed('ojroques/vim-oscyank')
+call s:ensure_installed('tpope/vim-commentary')
+call s:ensure_installed('tpope/vim-surround.git')
+call s:ensure_installed('tpope/vim-repeat.git')
+"call s:ensure_installed('itchyny/lightline.vim')
+"call s:ensure_installed('itchyny/vim-gitbranch')
+call s:ensure_installed('erik7386/vimdiffext')
+
+function! s:update_plugins()
+  let c = ''
+  let plugins = glob(s:plugin_dir . '/*/', 0, 1)
+  for plugin in plugins
+    if !isdirectory(plugin . '.git') | continue | endif
+    let c .= ' && echo && echo ' . shellescape(plugin) . ' && '
+    let c .= 'git -C ' . shellescape(plugin) . ' pull --autostash --rebase'
+  endfor
+  if c != '' | execute '!' . strpart(c, 4) | endif
+endfunction
+nnoremap <leader>up :call <SID>update_plugins()<CR>
+
+
+
+" Colors
+if exists('+termguicolors')
+  set termguicolors
+endif
+colorscheme gruvbox
+
+
+
+" FZF
+nnoremap <leader>ff <CMD>Files!<CR>
+nnoremap <leader>fo <CMD>History!<CR>
+nnoremap <leader>fb <CMD>Buffers!<CR>
+nnoremap <leader>fh <CMD>Helptags!<CR>
+" Grep current string
+nnoremap <leader>fs :Rg!<Space><C-r><C-w>
+" Grep input string (fzf prompt)
+nnoremap <leader>fg :Rg!<Space>
+" Grep for current file name (without extension)
+nnoremap <leader>fc <CMD>execute 'Rg! ' . expand('%:t:r')<CR>
+" Find files in your Vim config
+nnoremap <leader>fi <CMD>Files! $HOME/.config/vim<CR>
+
+
+
+" Statusline
+" Mostly stolen from github repo 'itchyny/vim-gitbranch'
+function! GitBranch()
+  let path=expand('%:p:h')
+  if get(b:, 'gitbranch_pwd', '') !=# path || !has_key(b:, 'gitbranch_path')
+    unlet! b:gitbranch_path
+    let b:gitbranch_pwd = path
+    let prev = ''
+    let git_modules = path =~# '/\.git/modules/'
+    let dir = ''
+    while path !=# prev
+      let dir = path . '/.git'
+      let type = getftype(dir)
+      if type ==# 'dir' && isdirectory(dir.'/objects') && isdirectory(dir.'/refs') && getfsize(dir.'/HEAD') > 10
+        break
+      elseif type ==# 'file'
+        let reldir = get(readfile(dir), 0, '')
+        if reldir =~# '^gitdir: '
+          let dir = simplify(path . '/' . reldir[8:])
+          break
+        endif
+      elseif git_modules && isdirectory(path.'/objects') && isdirectory(path.'/refs') && getfsize(path.'/HEAD') > 10
+        let dir = path
+        break
+      endif
+      let prev = path
+      let path = fnamemodify(path, ':h')
+    endwhile
+    if path !=# prev
+      let path = dir . '/HEAD'
+      if filereadable(path)
+        let b:gitbranch_path = path
+      endif
+    endif
+  endif
+  let b:branch = ''
+  if has_key(b:, 'gitbranch_path') && filereadable(b:gitbranch_path)
+    let branch = get(readfile(b:gitbranch_path), 0, '')
+    if branch =~# '^ref: '
+      let b:branch = pathshorten(substitute(branch, '^ref: \%(refs/\%(heads/\|remotes/\|tags/\)\=\)\=', '', ''))
+    elseif branch =~# '^\x\{20\}'
+      let b:branch = branch[:6]
+    endif
+  endif
+  return b:branch
+endfunction
+
+function! CurrentMode()
+  let l:m = mode()
+  if l:m ==# 'n'
+    return '%#StatuslineNormalMode# NORMAL'
+  elseif l:m ==# 'i'
+    return '%#StatuslineInsertMode# INSERT'
+  elseif l:m ==# 'v'
+    return '%#StatuslineVisualMode# VISUAL'
+  elseif l:m ==# 'V'
+    return '%#StatuslineVisualMode# V-LINE'
+  elseif l:m ==# ''
+    return '%#StatuslineVisualMode# V-BLOCK'
+  elseif l:m ==# 'R'
+    return '%#StatuslineReplaceMode# REPLACE'
+  elseif l:m ==# 's'
+    return '%#StatuslineSelectMode# SELECT'
+  elseif l:m ==# 'c'
+    return '%#StatuslineCommandMode# COMMAND'
+  elseif l:m ==# 't'
+    return '%#StatuslineNormalMode# TERMINAL'
+  endif
+  return ' OTHER'
+endfunction
+
+" Stolen from gruvbox
+" bright_green -> highlight StatuslineNormalMode guifg=#282828 guibg=#b8bb26
+highlight StatuslineNormalMode guifg=#282828 guibg=#79740e
+highlight StatuslineInsertMode guifg=#282828 guibg=#83a598
+highlight StatuslineVisualMode guifg=#282828 guibg=#fe8019
+highlight StatuslineReplaceMode guifg=#282828 guibg=#fe8019
+highlight StatuslineSelectMode guifg=#282828 guibg=#fe8019
+highlight StatuslineCommandMode guifg=#282828 guibg=#fabd2f
+highlight StatusLine gui=reverse guifg=#282828 guibg=#d5c4a1
+highlight StatusLineNC gui=reverse guifg=#282828 guibg=#504945
+
+augroup BufferStatus
+  autocmd!
+  autocmd BufEnter *
+      \ if &buftype == '' |
+      \   setlocal statusline=%{%CurrentMode()%} |
+      \   setlocal statusline+=%{&paste?'\|PASTE':''} |
+      \   setlocal statusline+=\ %< |
+      \   setlocal statusline+=%{%len(GitBranch())>0?'%#GruvboxPurpleBold#\ '.b:branch:''%} |
+      \   setlocal statusline+=%#StatusLine#\ %f |
+      \   setlocal statusline+=%r |
+      \   setlocal statusline+=%m |
+      \   setlocal statusline+=%= |
+      \   setlocal statusline+=\ %{&fileformat} |
+      \   setlocal statusline+=\ %{&fileencoding?&fileencoding:&encoding} |
+      \   setlocal statusline+=\ %{len(&filetype)>0?&filetype:'.'} |
+      \   setlocal statusline+=\ %p%% |
+      \   setlocal statusline+=\ %l:%v |
+      \ endif
+  autocmd BufLeave *
+      \ if &buftype == '' |
+      \   setlocal statusline=%#StatusLineNC# |
+      \   setlocal statusline+=%< |
+      \   setlocal statusline+=%f |
+      \   setlocal statusline+=%r |
+      \   setlocal statusline+=%m |
+      \   setlocal statusline+=%= |
+      \   setlocal statusline+=\ %p%% |
+      \   setlocal statusline+=\ %l:%v |
+      \ endif
+augroup END
+
+
+
+" LSP
+augroup lsp
+  autocmd!
+  autocmd User LspSetup call LspOptionsSet(#{
+      \   autoHighlightDiags: v:true,
+      \ })
+      "   diagSignErrorText: '✘',
+      "   diagSignWarningText: '▲',
+      "   diagSignInfoText: '»',
+      "   diagSignHintText: '⚑',
+  autocmd User LspSetup call LspAddServer([#{
+      \   name: 'clangd',
+      \   filetype: ['c', 'cpp'],
+      \   path: $HOME . '/.local/share/nvim/mason/bin/clangd',
+      \   args: ['--background-index']
+      \ }, #{
+      \   name: 'luals',
+      \   filetype: 'lua',
+      \   path: $HOME . "/.local/share/nvim/mason/bin/lua-language-server",
+      \   args: [],
+      \   initializationOptions: #{
+      \     Lua: #{
+      \       runtime: #{ version: 'LuaJIT' },
+      \       diagnostics: #{ globals: [ 'vim' ] },
+      \       workspace: #{ library: $VIMRUNTIME },
+      \       telemetry: #{ enable: 0 }
+      \     }
+      \   }
+      \ }])
+  autocmd FileType c,cpp setlocal omnifunc=lsp#complete
+  autocmd FileType c,cpp setlocal formatexpr=lsp#lsp#FormatExpr()
+augroup END
+
+nnoremap gra <CMD>LspCodeAction<CR>
+vnoremap gra <CMD>LspCodeAction<CR>
+"nnoremap grd <CMD>LspDiagHere<CR>
+nnoremap grd <CMD>LspDiag current<CR>
+nnoremap gri <CMD>LspGotoImpl<CR>
+nnoremap grn <CMD>LspRename<CR>
+nnoremap grr <CMD>LspShowReferences<CR>
+nnoremap grt <CMD>LspGotoTypeDef<CR>
+nnoremap gO <CMD>LspDocumentSymbol<CR>
+inoremap <C-s> <CMD>LspShowSignature<CR>
+vnoremap an <CMD>LspSelectionExpand<CR>
+vnoremap in <CMD>LspSelectionExpand<CR>
+nnoremap gd <CMD>LspGotoDefinition<CR>
+nnoremap K  <CMD>LspHover<CR>
+nnoremap ]d <CMD>LspDiag next \| LspDiag current<CR>
+nnoremap [d <CMD>LspDiag prev \| LspDiag current<CR>
+
+
+
+" Misc
+augroup git
+  autocmd!
+  "autocmd BufNewFile,BufRead *.diff,*.patch set filetype=diff
+  autocmd Syntax diff
+      \ highlight WhiteSpaceEOL ctermbg=red |
+      \ match WhiteSpaceEOL /\(^+.*\)\@<=\s\+$/
+  autocmd Syntax gitcommit setlocal textwidth=72
+augroup END
+
+"function! s:DoPrettyXML()
+"  " Break lines at expected places. That is between > and <.
+"  silent! :%join
+"  silent! :%s/>\s*<\(br>\)\@!/>\r</g
+"  normal! gg0=G
+"endfunction
+"nnoremap <silent><F9> :call <SID>DoPrettyXML()<CR>
+
+"function! s:DoPrettyJSON()
+"  " Break lines at expected places. That is outside strings and
+"  "   - after '[', '{' or ','
+"  "   - before ']' or '}'
+"  silent! :%join
+""  silent! :%s:\(\\\@<!\(["']\).\{-}\\\@<!\2\)\|\s:\1:g
+"  silent! :%s!\s\+\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!!g
+"  silent! :%s!\([[{,]\)\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!\1\r!g
+"  silent! :%s!\([]}]\)\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!\r\1!g
+"  silent! :%s!:\%(\%([^"]*"[^"]*"\)*[^"]*$\)\@=!: !g
+"  silent! :%s!\([[{]\)\_s*\([]}]\)!\1\2!g
+"  normal! gg0=G
+"endfunction
+""nnoremap <silent><F10> :call <SID>DoPrettyJSON()<CR>
+"nnoremap <silent><leader>j :call <SID>DoPrettyJSON()<CR>
+
+"autocmd FileType sql setlocal formatprg=sqlformat\ --reindent\ --keywords\ upper\ --identifiers\ lower\ -
+"autocmd FileType sql setlocal formatprg=/usr/local/bin/pg_format\ --function-case\ 0\ --keyword-case\ 0\ --type-case\ 0\ --spaces\ 2\ --no-extra-line\ -
+"autocmd FileType c,cpp setlocal equalprg=clang-format
+
+nnoremap <leader>l <cmd>LF<cr>
+function! LF()
+  let temp = tempname()
+  exec 'silent !lf -selection-path=' . shellescape(temp)
+  if !filereadable(temp)
+    redraw!
+    return
+  endif
+  let names = readfile(temp)
+  if empty(names)
+    redraw!
+    return
+  endif
+  exec 'edit ' . fnameescape(names[0])
+  for name in names[1:]
+    exec 'argadd ' . fnameescape(name)
+  endfor
+  redraw!
+endfunction
+command! -bar LF call LF()
+
+augroup encrypted
+  au!
+  autocmd BufReadPre,FileReadPre *.gpg
+    \ set viminfo= noswapfile bin
+    \ let ch_save = &ch|set ch=2
+  autocmd BufReadPost,FileReadPost *.gpg
+    \ '[,']!gpg --decrypt 2> /dev/null
+    \ set nobin
+    \ let &ch = ch_save|unlet ch_save
+    \ execute ":doautocmd BufReadPost " . expand("%:r")
+  autocmd BufWritePre,FileWritePre *.gpg
+    \ set viminfo= noswapfile
+    \ '[,']!gpg --default-recipient-self -ae 2> /dev/null
+  autocmd BufWritePost,FileWritePost *.gpg u
+augroup END
