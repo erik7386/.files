@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+
+usage() {
+  echo "Usage: $0 v|vi|vim|vim/"
+  echo "       $0 n|neovim|neovim/"
+  exit 1
+}
+
+build() {
+  app=${1%%/}
+  [[ ${app} =~ v|vi|vim ]] && j="-j" && cd vim ||
+    { [[ ${app} =~ n|neovim ]] && cd neovim; }
+  [[ 0 != $? ]] && echo "Unknown argument '${app}'" && return 1
+  git checkout $(git rev-parse --verify HEAD)
+  git fetch --prune origin +refs/heads/*:refs/heads/* +refs/tags/*:refs/tags/*
+  tag=$(git describe --tags --abbrev=0 master)
+  [[ 0 == $(git rev-list --count HEAD...$(git rev-parse --verify ${tag})) ]] &&
+    read -r -p "No new commits. Continue anyway? (y/N): " ans &&
+    [[ ! ${ans} =~ ^[Yy]$ ]] &&
+    exit 0
+  make uninstall &> /dev/null
+  make clean &> /dev/null
+  [[ "No local changes to save" != "$(git stash)" ]] && stashed=1
+  git checkout -q ${tag}
+  [[ 1 == ${stashed} ]] && git stash pop
+  make ${j}
+  make install > /dev/null
+  git log --pretty=onelinediff HEAD@{1}..HEAD
+  echo "Version: $(git describe --first-parent --dirty --always)"
+}
+
+(set -ex; build "$1") || usage

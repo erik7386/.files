@@ -1,0 +1,34 @@
+# Make a link to .files from windows (not elevated, System > For developers > Developer Mode):
+# cmd /c mklink "%USERPROFILE%\.config\alacritty\alacritty.toml" "\\wsl$\Ubuntu-22.04\home\me\.config\alacritty\alacritty-windows.toml"
+
+shell = "wsl.exe ~ -d Ubuntu-22.04"
+
+live_config_reload = true
+
+[env]
+TERM = "alacritty-direct"
+
+[window]
+#dimensions = { columns = 120, lines = 50 }
+opacity = 0.80
+startup_mode = "Windowed"     # "Windowed" | "Maximized" | "Fullscreen" | "SimpleFullscreen"
+title = "Alacritty"
+dynamic_title = false
+decorations_theme_variant = "Dark"
+resize_increments = true
+
+[scrolling]
+history = 100000
+
+[font]
+#normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+normal = { family = "UbuntuSansMono Nerd Font", style = "Regular" }
+size = 12.0
+builtin_box_drawing = false
+
+[selection]
+save_to_clipboard = true
+
+[mouse]
+hide_when_typing = true
+
